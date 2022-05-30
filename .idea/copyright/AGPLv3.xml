@@ -1,0 +1,6 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="Copyright &amp;#36;originalComment.match(&quot;Copyright \(c\) (\d+)&quot;, 1, &quot;-&quot;, &quot;&amp;#36;today.year&quot;)&amp;#36;today.year limbang and contributors.&#10;&#10;此源代码的使用受 GNU AGPLv3 许可证的约束，该许可证可在&quot;LICENSE&quot;文件中找到。&#10;Use of this source code is governed by the GNU AGPLv3 license that can be found in the &quot;LICENSE&quot; file." />
+    <option name="myName" value="AGPLv3" />
+  </copyright>
+</component>

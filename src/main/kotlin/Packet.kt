@@ -39,7 +39,7 @@ enum class PacketType(val value: Int) {
 
     companion object {
         private val valueMap = values().associateBy { it.value }
-        fun fromValue(value: Int) = valueMap[value] ?: throw RuntimeException("未知的数据包类型：$value")
+        fun fromValue(value: Int) = valueMap[value] ?: throw RuntimeException("Unknown packet type：$value")
     }
 }
 

@@ -17,7 +17,7 @@ import java.nio.channels.ByteChannel
 import java.nio.channels.SocketChannel
 
 /**
- * Rcon 客户端
+ * ## 支持`Rcon`协议的客户端
  *
  * 使用方法:
  * ```
@@ -38,7 +38,7 @@ class Rcon(private val channel: ByteChannel, private val codec: PacketCodec) : C
     private var requestCounter = 0
 
     /**
-     * 认证
+     * ## Rcon协议认证
      *
      * @param password 密码
      */
@@ -51,29 +51,29 @@ class Rcon(private val channel: ByteChannel, private val codec: PacketCodec) : C
             }
         }
         if (response.type != PacketType.SERVERDATA_AUTH_RESPONSE) {
-            throw IOException("身份验证响应类型无效: " + response.type)
+            throw IOException("Invalid authentication response type: " + response.type)
         }
         return response.isValid
     }
 
     /**
-     * 发送命令
+     * ## 发送命令
      *
      * @param command 命令
      */
     fun sendCommand(command: String): String {
         val response = writeAndRead(PacketType.SERVERDATA_EXECCOMMAND, command)
         if (response.type != PacketType.SERVERDATA_RESPONSE_VALUE) {
-            throw IOException("错误的命令响应类型: " + response.type)
+            throw IOException("Bad command response type: " + response.type)
         }
         if (!response.isValid) {
-            throw IOException("无效的命令响应: " + response.payload)
+            throw IOException("Invalid command response: " + response.payload)
         }
         return response.payload
     }
 
     /**
-     * 写入数据包后读取数据包
+     * ## 写入数据包后读取数据包
      *
      * @param packetType 数据包类型
      * @param payload 数据包有效载荷
@@ -87,14 +87,14 @@ class Rcon(private val channel: ByteChannel, private val codec: PacketCodec) : C
     }
 
     /**
-     * 写数据包
+     * ## 写数据包
      *
      * @param packet 数据包
      * @return
      */
     @Synchronized
     private fun write(packet: Packet): Int {
-        if (packet.payload.length > 1460) throw IllegalArgumentException("数据包负载太大")
+        if (packet.payload.length > 1460) throw IllegalArgumentException("Packet payload is too large")
 
         writerBuffer.clear()
         writerBuffer.position(Int.SIZE_BYTES)
@@ -105,7 +105,7 @@ class Rcon(private val channel: ByteChannel, private val codec: PacketCodec) : C
     }
 
     /**
-     * 读数据包
+     * ## 读数据包
      *
      * @param expectedRequestId 预期的请求 ID
      * @return
@@ -126,7 +126,7 @@ class Rcon(private val channel: ByteChannel, private val codec: PacketCodec) : C
 
         // 判断是否验证和请求id是否正确
         if (packet.isValid && packet.requestId != expectedRequestId) {
-            throw IOException("意外的响应ID ($expectedRequestId -> ${packet.requestId})")
+            throw IOException("Unexpected response ID ($expectedRequestId -> ${packet.requestId})")
         }
         return packet
     }

@@ -5,20 +5,26 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.data.AutoSavePluginData
+import net.mamoe.mirai.console.data.ValueDescription
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import net.mamoe.mirai.event.broadcast
+import net.mamoe.mirai.event.globalEventChannel
 import top.limbang.minecraft.PluginData.serverInfo
 import top.limbang.minecraft.utils.toCommand
+import top.limbang.mirai.event.RenameEvent
 import java.io.IOException
 
 object MinecraftRemoteConsole : KotlinPlugin(JvmPluginDescription(
     id = "top.limbang.minecraft-remote-console",
     name = "MinecraftRemoteConsole",
-    version = "0.1.0",
+    version = "0.1.1",
 ) {
     author("limbang")
     info("""Minecraft远程控制台""")
+    dependsOn("top.limbang.general-plugin-interface")
 }) {
 
     private val rconList: MutableMap<String, Rcon> = mutableMapOf()
@@ -37,6 +43,13 @@ object MinecraftRemoteConsole : KotlinPlugin(JvmPluginDescription(
         // 根据配置打开rcon连接
         serverInfo.forEach {
             openRcon(it.key, it.value.ip, it.value.port, it.value.password)
+        }
+        // 监听改名事件
+        globalEventChannel().subscribeAlways<RenameEvent> {
+            logger.info("RenameEvent: pluginId = $pluginId oldName = $oldName newName = $newName")
+            if (!PluginData.isPluginLinkage) return@subscribeAlways
+            if (pluginId == MinecraftRemoteConsole.id) return@subscribeAlways
+            PluginCompositeCommand.renameServer(oldName, newName, true)
         }
     }
 
@@ -122,6 +135,9 @@ data class RconServer(val ip: String, val port: Int, val password: String)
  */
 object PluginData : AutoSavePluginData("MinecraftRemoteConsole") {
     val serverInfo: MutableMap<String, RconServer> by value()
+
+    @ValueDescription("插件联动,默认打开")
+    var isPluginLinkage: Boolean by value(true)
 }
 
 /**
@@ -157,15 +173,25 @@ object PluginCompositeCommand : CompositeCommand(MinecraftRemoteConsole, "rcon")
     @SubCommand
     @Description("重命名服务器")
     suspend fun CommandSender.rename(name: String, newName: String) {
+        sendMessage(renameServer(name, newName, false))
+    }
+
+    internal suspend fun renameServer(name: String, newName: String, isEvent: Boolean): String {
+        MinecraftRemoteConsole.logger.info("4")
         serverInfo[name].let {
+            MinecraftRemoteConsole.logger.info("5")
             if (it == null) {
-                sendMessage("Server does not exist")
-                return
+                return "Server does not exist"
             }
             serverInfo[newName] = it
             serverInfo.remove(name)
-            if (MinecraftRemoteConsole.rename(name, newName)) sendMessage("Server rename successful: $name -> $newName")
-            else sendMessage("Server $name not connected successfully, rename failed")
+            MinecraftRemoteConsole.logger.info("6")
+            return if (MinecraftRemoteConsole.rename(name, newName)) {
+                MinecraftRemoteConsole.logger.info("7")
+                // 不是事件就发布改名广播
+                if (!isEvent) RenameEvent(MinecraftRemoteConsole.id, name, newName).broadcast()
+                "Server rename successful: $name -> $newName"
+            } else "Server $name not connected successfully, rename failed"
         }
     }
 
@@ -181,5 +207,12 @@ object PluginCompositeCommand : CompositeCommand(MinecraftRemoteConsole, "rcon")
             list += "\n${it.key} : ${it.value.ip} ${it.value.port}"
         }
         sendMessage(list)
+    }
+
+    @SubCommand
+    @Description("设置插件联动")
+    suspend fun CommandSender.setPluginLinkage(value: Boolean) {
+        PluginData.isPluginLinkage = value
+        sendMessage("插件联动:${PluginData.isPluginLinkage}")
     }
 }

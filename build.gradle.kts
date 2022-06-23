@@ -1,13 +1,18 @@
 plugins {
-    val kotlinVersion = "1.6.21"
+    val kotlinVersion = "1.7.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 
-    id("net.mamoe.mirai-console") version "2.11.1"
+    id("net.mamoe.mirai-console") version "2.12.0-RC"
 }
 
-group = "top.limbang.minecraft"
-version = "0.1.0"
+group = "top.limbang"
+version = "0.1.1"
+
+mirai {
+    coreVersion = "2.11.1"
+    consoleVersion = "2.11.1"
+}
 
 repositories {
     maven("https://maven.aliyun.com/repository/public")
@@ -15,5 +20,6 @@ repositories {
 }
 
 dependencies {
+    compileOnly("top.limbang:mirai-plugin-general-interface:1.0.1")
     testImplementation(kotlin("test"))
 }

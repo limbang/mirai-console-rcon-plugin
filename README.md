@@ -9,6 +9,8 @@
 <p>使用 <a href = "https://wiki.vg/RCON">RCON</a> 协议远程控制Minecraft服务器</p>
 </div>
 
+需要前置插件[mirai-plugin-general-interface](https://github.com/limbang/mirai-plugin-general-interface)用来支持事件
+
 ## 命令
 ```shell
 /rcon add <name> <ip> <port> <password>    # 添加服务器
@@ -16,6 +18,7 @@
 /rcon delete <name>    # 删除服务器
 /rcon list    # 服务器列表
 /rcon rename <name> <newName>    # 重命名服务器
+/rcon setPluginLinkage <value>    # 设置插件联动  true false  默认为:true 
 ```
 
 ## 使用方法

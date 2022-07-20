@@ -3,13 +3,13 @@
 [![](https://img.shields.io/github/v/release/limbang/mirai-console-rcon-plugin?include_prereleases)](https://github.com/limbang/mirai-console-rcon-plugin/releases)
 ![](https://img.shields.io/github/downloads/limbang/mirai-console-rcon-plugin/total)
 [![](https://img.shields.io/github/license/limbang/mirai-console-rcon-plugin)](https://github.com/limbang/mirai-console-rcon-plugin/blob/master/LICENSE)
-[![](https://img.shields.io/badge/mirai-2.11.1-69c1b9)](https://github.com/mamoe/mirai)
+[![](https://img.shields.io/badge/mirai-2.12.0-69c1b9)](https://github.com/mamoe/mirai)
 
 本项目是基于 Mirai Console 编写的插件
 <p>使用 <a href = "https://wiki.vg/RCON">RCON</a> 协议远程控制Minecraft服务器</p>
 </div>
 
-需要前置插件[mirai-plugin-general-interface](https://github.com/limbang/mirai-plugin-general-interface)用来支持事件
+可选前置插件[mirai-plugin-general-interface](https://github.com/limbang/mirai-plugin-general-interface)用来支持事件
 
 ## 命令
 ```shell
@@ -18,7 +18,6 @@
 /rcon delete <name>    # 删除服务器
 /rcon list    # 服务器列表
 /rcon rename <name> <newName>    # 重命名服务器
-/rcon setPluginLinkage <value>    # 设置插件联动  true false  默认为:true 
 ```
 
 ## 使用方法

@@ -17,5 +17,5 @@ fun Array<out String>.toCommand(): String {
     forEach {
         command += " $it"
     }
-    return command
+    return command.trim()
 }

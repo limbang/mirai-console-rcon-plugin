@@ -1,26 +1,29 @@
 package top.limbang.minecraft
 
+import jdk.jfr.Description
 import kotlinx.serialization.Serializable
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.UserCommandSender
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.event.broadcast
 import net.mamoe.mirai.event.globalEventChannel
 import top.limbang.minecraft.MinecraftRemoteConsole.isLoadGeneralPluginInterface
 import top.limbang.minecraft.PluginData.serverInfo
 import top.limbang.minecraft.utils.toCommand
-import top.limbang.mirai.event.RenameEvent
+import top.limbang.mirai.event.GroupRenameEvent
 import java.io.IOException
 
 object MinecraftRemoteConsole : KotlinPlugin(JvmPluginDescription(
     id = "top.limbang.minecraft-remote-console",
     name = "MinecraftRemoteConsole",
-    version = "0.1.2",
+    version = "0.1.4",
 ) {
     author("limbang")
     info("""Minecraft远程控制台""")
@@ -57,10 +60,10 @@ object MinecraftRemoteConsole : KotlinPlugin(JvmPluginDescription(
 
         if (!isLoadGeneralPluginInterface) return
         // 监听改名事件
-        globalEventChannel().subscribeAlways<RenameEvent> {
-            logger.info("RenameEvent: pluginId = $pluginId oldName = $oldName newName = $newName")
+        globalEventChannel().subscribeAlways<GroupRenameEvent> {
+            logger.info("GroupRenameEvent: pluginId = $pluginId oldName = $oldName groupId=$groupId newName = $newName")
             if (pluginId == MinecraftRemoteConsole.id) return@subscribeAlways
-            PluginCompositeCommand.renameServer(oldName, newName, true)
+            PluginCompositeCommand.renameServer(oldName, newName, groupId, true)
         }
     }
 
@@ -156,7 +159,9 @@ object PluginCompositeCommand : CompositeCommand(MinecraftRemoteConsole, "rcon")
     @SubCommand
     @Description("向服务器发送远程命令")
     suspend fun CommandSender.cmd(name: String, vararg command: String) {
-        sendMessage(MinecraftRemoteConsole.sendCommand(name, command.toCommand()))
+        MinecraftRemoteConsole.sendCommand(name, command.toCommand()).run {
+            if (this.isNotEmpty()) sendMessage(this) else sendMessage("send successfully")
+        }
     }
 
     @SubCommand
@@ -180,11 +185,15 @@ object PluginCompositeCommand : CompositeCommand(MinecraftRemoteConsole, "rcon")
 
     @SubCommand
     @Description("重命名服务器")
-    suspend fun CommandSender.rename(name: String, newName: String) {
-        sendMessage(renameServer(name, newName, false))
+    suspend fun UserCommandSender.rename(name: String, newName: String) {
+        if (subject !is Group) {
+            sendMessage("Please send commands in the group")
+            return
+        }
+        sendMessage(renameServer(name, newName, subject.id, false))
     }
 
-    internal suspend fun renameServer(name: String, newName: String, isEvent: Boolean): String {
+    internal suspend fun renameServer(name: String, newName: String, groupID: Long, isEvent: Boolean): String {
         serverInfo[name].let {
             if (it == null) {
                 return "Server does not exist"
@@ -194,7 +203,7 @@ object PluginCompositeCommand : CompositeCommand(MinecraftRemoteConsole, "rcon")
             return if (MinecraftRemoteConsole.rename(name, newName)) {
                 if (isLoadGeneralPluginInterface) {
                     // 不是事件就发布改名广播
-                    if (!isEvent) RenameEvent(MinecraftRemoteConsole.id, name, newName).broadcast()
+                    if (!isEvent) GroupRenameEvent(groupID, MinecraftRemoteConsole.id, name, newName).broadcast()
                 }
                 "Server rename successful: $name -> $newName"
             } else "Server $name not connected successfully, rename failed"
